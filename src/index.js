@@ -1,25 +1,59 @@
-import { createWorld, resetWorld, deleteWorld, getWorldComponents, getAllEntities, enableManualEntityRecycling } from './World.js'
-import { addEntity, removeEntity, setDefaultSize, setRemovedRecycleThreshold, getEntityComponents, entityExists, flushRemovedEntities, resetGlobals } from './Entity.js'
-import { defineComponent, registerComponent, registerComponents, hasComponent, addComponent, removeComponent } from './Component.js'
-import { defineSystem } from './System.js'
-import { defineQuery, enterQuery, exitQuery, Changed, Not, commitRemovals, resetChangedQuery, removeQuery } from './Query.js'
-import { defineSerializer, defineDeserializer, DESERIALIZE_MODE } from './Serialize.js'
-import { parentArray } from './Storage.js'
-import { TYPES_ENUM } from './Constants.js'
+import {
+  createWorld,
+  resetWorld,
+  deleteWorld,
+  getWorldComponents,
+  getAllEntities,
+  enableManualEntityRecycling,
+} from './World.js';
+import {
+  addEntity,
+  removeEntity,
+  setDefaultSize,
+  setRemovedRecycleThreshold,
+  getEntityComponents,
+  entityExists,
+  flushRemovedEntities,
+  resetGlobals,
+} from './Entity.js';
+import {
+  defineComponent,
+  registerComponent,
+  registerComponents,
+  hasComponent,
+  addComponent,
+  removeComponent,
+  getComponent,
+} from './Component.js';
+import { defineSystem } from './System.js';
+import {
+  defineQuery,
+  enterQuery,
+  exitQuery,
+  Changed,
+  Not,
+  commitRemovals,
+  resetChangedQuery,
+  removeQuery,
+} from './Query.js';
+import { defineSerializer, defineDeserializer, DESERIALIZE_MODE } from './Serialize.js';
+import { parentArray } from './Storage.js';
+import { TYPES_ENUM } from './Constants.js';
 
-export const pipe = (...fns) => (input) => {
-  let tmp = input
-  for (let i = 0; i < fns.length; i++) {
-    const fn = fns[i]
-    tmp = fn(tmp)
-  }
-  return tmp
-}
+export const pipe =
+  (...fns) =>
+  (input) => {
+    let tmp = input;
+    for (let i = 0; i < fns.length; i++) {
+      const fn = fns[i];
+      tmp = fn(tmp);
+    }
+    return tmp;
+  };
 
-export const Types = TYPES_ENUM
+export const Types = TYPES_ENUM;
 
 export {
-
   setDefaultSize,
   setRemovedRecycleThreshold,
   createWorld,
@@ -32,15 +66,14 @@ export {
   enableManualEntityRecycling,
   flushRemovedEntities,
   getAllEntities,
-  
   registerComponent,
   registerComponents,
   defineComponent,
   addComponent,
+  getComponent,
   removeComponent,
   hasComponent,
   getEntityComponents,
-
   defineQuery,
   Changed,
   Not,
@@ -49,15 +82,10 @@ export {
   commitRemovals,
   resetChangedQuery,
   removeQuery,
-
   defineSystem,
-  
   defineSerializer,
   defineDeserializer,
   DESERIALIZE_MODE,
-
   parentArray,
-
-  resetGlobals
-
-}
+  resetGlobals,
+};

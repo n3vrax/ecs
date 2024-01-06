@@ -530,17 +530,21 @@ var setDefaultSize = (newSize) => {
 var setRemovedRecycleThreshold = (newThreshold) => {
   removedReuseThreshold = newThreshold;
 };
-var getEntityCursor = () => globalEntityCursor;
+var getEntityCursor = (world) => world ? world[$wentityCursor] : globalEntityCursor;
 var eidToWorld = /* @__PURE__ */ new Map();
 var flushRemovedEntities = (world) => {
   if (!world[$manualEntityRecycling]) {
-    throw new Error("bitECS - cannot flush removed entities, enable feature with the enableManualEntityRecycling function");
+    throw new Error(
+      "bitECS - cannot flush removed entities, enable feature with the enableManualEntityRecycling function"
+    );
   }
+  world[$wremovedEntities].push(...world[$wrecycledEntities]);
+  world[$wrecycledEntities].length = 0;
   removed.push(...recycled);
   recycled.length = 0;
 };
 var addEntity = (world) => {
-  const eid = world[$manualEntityRecycling] ? removed.length ? removed.shift() : globalEntityCursor++ : removed.length > Math.round(globalSize * removedReuseThreshold) ? removed.shift() : globalEntityCursor++;
+  const eid = world[$manualEntityRecycling] ? world[$wremovedEntities].length ? world[$wremovedEntities].shift() : world[$wentityCursor]++ : world[$wremovedEntities].length > Math.round(world[$size] * removedReuseThreshold) ? world[$wremovedEntities].shift() : world[$wentityCursor]++;
   if (eid > world[$size])
     throw new Error("bitECS - max entities reached");
   world[$entitySparseSet].add(eid);
@@ -560,9 +564,9 @@ var removeEntity = (world, eid) => {
     queryRemoveEntity(world, q, eid);
   });
   if (world[$manualEntityRecycling])
-    recycled.push(eid);
+    world[$wrecycledEntities].push(eid);
   else
-    removed.push(eid);
+    world[$wremovedEntities].push(eid);
   world[$entitySparseSet].remove(eid);
   world[$entityComponents].delete(eid);
   world[$localEntities].delete(world[$localEntityLookup].get(eid));
@@ -709,7 +713,7 @@ var registerQuery = (world, query) => {
   });
   if (notComponents.length)
     world[$notQueries].add(q);
-  for (let eid = 0; eid < getEntityCursor(); eid++) {
+  for (let eid = 0; eid < getEntityCursor(world); eid++) {
     if (!world[$entitySparseSet].has(eid))
       continue;
     const match = queryCheckEntity(world, q, eid);
@@ -863,10 +867,13 @@ var registerComponent = (world, component) => {
       queries.add(q);
     }
   });
+  if (isManagedComponent(component)) {
+    component.store = defineComponent(component.schema, world[$size]);
+  }
   world[$componentMap].set(component, {
     generationId: world[$entityMasks].length - 1,
     bitflag: world[$bitflag],
-    store: component,
+    store: isManagedComponent(component) ? component.store : component,
     queries,
     notQueries,
     changedQueries
@@ -876,6 +883,15 @@ var registerComponent = (world, component) => {
 var registerComponents = (world, components2) => {
   components2.forEach((c) => registerComponent(world, c));
 };
+var getComponent = (world, component) => {
+  if (!world[$componentMap].has(component))
+    registerComponent(world, component);
+  const c = world[$componentMap].get(component);
+  if (isManagedComponent(component)) {
+    component.store = c.store;
+  }
+  return component;
+};
 var hasComponent = (world, component, eid) => {
   const registeredComponent = world[$componentMap].get(component);
   if (!registeredComponent)
@@ -883,6 +899,9 @@ var hasComponent = (world, component, eid) => {
   const { generationId, bitflag } = registeredComponent;
   const mask = world[$entityMasks][generationId][eid];
   return (mask & bitflag) === bitflag;
+};
+var isManagedComponent = (component) => {
+  return typeof component.reset === "function";
 };
 var addComponent = (world, component, eid, reset = false) => {
   if (eid === void 0)
@@ -894,6 +913,9 @@ var addComponent = (world, component, eid, reset = false) => {
   if (hasComponent(world, component, eid))
     return;
   const c = world[$componentMap].get(component);
+  if (isManagedComponent(component)) {
+    component.store = c.store;
+  }
   const { generationId, bitflag, queries, notQueries } = c;
   world[$entityMasks][generationId][eid] |= bitflag;
   queries.forEach((q) => {
@@ -909,8 +931,13 @@ var addComponent = (world, component, eid, reset = false) => {
     }
   });
   world[$entityComponents].get(eid).add(component);
-  if (reset)
-    resetStoreFor(component, eid);
+  if (reset) {
+    if (isManagedComponent(component)) {
+      component.reset(eid);
+    } else {
+      resetStoreFor(component, eid);
+    }
+  }
 };
 var removeComponent = (world, component, eid, reset = true) => {
   if (eid === void 0)
@@ -920,6 +947,9 @@ var removeComponent = (world, component, eid, reset = true) => {
   if (!hasComponent(world, component, eid))
     return;
   const c = world[$componentMap].get(component);
+  if (isManagedComponent(component)) {
+    component.store = c.store;
+  }
   const { generationId, bitflag, queries } = c;
   world[$entityMasks][generationId][eid] &= ~bitflag;
   queries.forEach((q) => {
@@ -935,11 +965,19 @@ var removeComponent = (world, component, eid, reset = true) => {
     }
   });
   world[$entityComponents].get(eid).delete(component);
-  if (reset)
-    resetStoreFor(component, eid);
+  if (reset) {
+    if (isManagedComponent(component)) {
+      component.reset(eid);
+    } else {
+      resetStoreFor(component, eid);
+    }
+  }
 };
 
 // src/World.js
+var $wentityCursor = Symbol("worldEntityCursor");
+var $wremovedEntities = Symbol("worldRemovedEntities");
+var $wrecycledEntities = Symbol("worldRecycledEntities");
 var $size = Symbol("size");
 var $resizeThreshold = Symbol("resizeThreshold");
 var $bitflag = Symbol("bitflag");
@@ -972,6 +1010,9 @@ var resetWorld = (world, size = getGlobalSize()) => {
   world[$size] = size;
   if (world[$entityArray])
     world[$entityArray].forEach((eid) => removeEntity(world, eid));
+  world[$wentityCursor] = 0;
+  world[$wremovedEntities] = [];
+  world[$wrecycledEntities] = [];
   world[$entityMasks] = [new Uint32Array(size)];
   world[$entityComponents] = /* @__PURE__ */ new Map();
   world[$archetypes] = [];
@@ -1037,6 +1078,7 @@ export {
   exitQuery,
   flushRemovedEntities,
   getAllEntities,
+  getComponent,
   getEntityComponents,
   getWorldComponents,
   hasComponent,

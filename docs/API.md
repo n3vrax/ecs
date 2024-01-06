@@ -10,6 +10,9 @@
 <dt><a href="#registerComponents">registerComponents</a></dt>
 <dd><p>Registers multiple components with a world.</p>
 </dd>
+<dt><a href="#getComponent">getComponent</a> ⇒ <code>Component</code></dt>
+<dd><p>Sets the internal component store to the one mapped to the world ready to be used</p>
+</dd>
 <dt><a href="#hasComponent">hasComponent</a> ⇒ <code>boolean</code></dt>
 <dd><p>Checks if an entity has a component.</p>
 </dd>
@@ -115,6 +118,18 @@ This should be set to as a % (0-1) of <code>defaultSize</code> that you would ne
 | components | <code>Component</code> | 
 
 
+<br><a name="getComponent"></a>
+
+## getComponent ⇒ <code>Component</code>
+> Sets the internal component store to the one mapped to the world ready to be used
+
+
+| Param | Type |
+| --- | --- |
+| world | <code>World</code> | 
+| component | <code>Component</code> | 
+
+
 <br><a name="hasComponent"></a>
 
 ## hasComponent ⇒ <code>boolean</code>
@@ -170,7 +185,8 @@ This should be set to as a % (0-1) of <code>defaultSize</code> that you would ne
 <br><a name="setRemovedRecycleThreshold"></a>
 
 ## setRemovedRecycleThreshold
-> Sets the number of entities that must be removed before removed entity ids begin to be recycled.> This should be set to as a % (0-1) of `defaultSize` that you would never likely remove/add on a single frame.
+> Sets the number of entities that must be removed before removed entity ids begin to be recycled.
+> This should be set to as a % (0-1) of `defaultSize` that you would never likely remove/add on a single frame.
 
 
 | Param | Type |
