@@ -12,9 +12,9 @@ import { resize } from './Storage.js';
 import { SparseSet } from './Util.js';
 
 // HERE ADDED BY MYSELF
-export const $wentityCursor = Symbol('worldEntityCursor');
-export const $wremovedEntities = Symbol('worldRemovedEntities');
-export const $wrecycledEntities = Symbol('worldRecycledEntities');
+export const $entityCursor = Symbol('worldEntityCursor');
+export const $removedEntities = Symbol('worldRemovedEntities');
+export const $recycledEntities = Symbol('worldRecycledEntities');
 
 //--------------------------------------------------------
 
@@ -70,9 +70,9 @@ export const resetWorld = (world, size = getGlobalSize()) => {
   if (world[$entityArray]) world[$entityArray].forEach((eid) => removeEntity(world, eid));
 
   // HERE ADDED BY MYSELF
-  world[$wentityCursor] = 0;
-  world[$wremovedEntities] = [];
-  world[$wrecycledEntities] = [];
+  world[$entityCursor] = 0;
+  world[$removedEntities] = [];
+  world[$recycledEntities] = [];
   // ------------------
 
   world[$entityMasks] = [new Uint32Array(size)];

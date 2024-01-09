@@ -82,6 +82,14 @@ This should be set to as a % (0-1) of <code>defaultSize</code> that you would ne
 </dd>
 </dl>
 
+## Functions
+
+<dl>
+<dt><a href="#getQueryComponents">getQueryComponents(query)</a> ⇒ <code>array</code></dt>
+<dd><p>Get list of components for a given query.</p>
+</dd>
+</dl>
+
 
 <br><a name="defineComponent"></a>
 
@@ -388,4 +396,16 @@ This should be set to as a % (0-1) of <code>defaultSize</code> that you would ne
 | Param | Type |
 | --- | --- |
 | world | <code>World</code> | 
+
+
+<br><a name="getQueryComponents"></a>
+
+## getQueryComponents(query) ⇒ <code>array</code>
+> Get list of components for a given query.
+
+**Returns**: <code>array</code> - components  
+
+| Param | Type |
+| --- | --- |
+| query | <code>function</code> | 
 

@@ -28,8 +28,10 @@ import {
 import { defineSystem } from './System.js';
 import {
   defineQuery,
+  getQueryComponents,
   enterQuery,
   exitQuery,
+  Optional,
   Changed,
   Not,
   commitRemovals,
@@ -75,6 +77,8 @@ export {
   hasComponent,
   getEntityComponents,
   defineQuery,
+  getQueryComponents,
+  Optional,
   Changed,
   Not,
   enterQuery,

@@ -105,13 +105,18 @@ export const getComponent = (world, component) => {
 export const hasComponent = (world, component, eid) => {
   const registeredComponent = world[$componentMap].get(component);
   if (!registeredComponent) return false;
+
+  if (isManagedComponent(component)) {
+    component.store = registeredComponent.store;
+  }
+
   const { generationId, bitflag } = registeredComponent;
   const mask = world[$entityMasks][generationId][eid];
   return (mask & bitflag) === bitflag;
 };
 
 export const isManagedComponent = (component) => {
-  return typeof component.reset === 'function';
+  return typeof component.reset === 'function' && component.hasOwnProperty('schema');
 };
 
 /**
@@ -181,10 +186,6 @@ export const removeComponent = (world, component, eid, reset = true) => {
 
   const c = world[$componentMap].get(component);
 
-  if (isManagedComponent(component)) {
-    component.store = c.store;
-  }
-
   const { generationId, bitflag, queries } = c;
 
   // Remove flag from entity bitmask
@@ -210,6 +211,7 @@ export const removeComponent = (world, component, eid, reset = true) => {
   // Zero out each property value
   if (reset) {
     if (isManagedComponent(component)) {
+      component.store = c.store;
       component.reset(eid);
     } else {
       resetStoreFor(component, eid);

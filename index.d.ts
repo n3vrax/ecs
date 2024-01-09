@@ -47,7 +47,7 @@ declare module 'ecs' {
     MAP,
   }
 
-  export type ComponentType<T extends ISchema> = {
+  export type ComponentType<T extends ISchema = ISchema> = {
     [key in keyof T]: T[key] extends Type
       ? ArrayByType[T[key]]
       : T[key] extends [infer RT, number]
@@ -80,8 +80,8 @@ declare module 'ecs' {
   export type Component = IComponent | ComponentType<ISchema>;
 
   export type QueryModifier<W extends IWorld = IWorld> = (
-    c: (IComponent | IComponentProp)[],
-  ) => (world: W) => IComponent | QueryModifier<W>;
+    c: (Component | IComponentProp)[],
+  ) => (world: W) => Component | QueryModifier<W>;
 
   export type Query<W extends IWorld = IWorld> = (world: W, clearDiff?: Boolean) => number[];
 
@@ -125,12 +125,18 @@ declare module 'ecs' {
     reset?: boolean,
   ): void;
   export function hasComponent<W extends IWorld = IWorld>(world: W, component: Component, eid: number): boolean;
-  export function getComponent<W extends IWorld = IWorld>(world: W, component: Component): Component;
+  export function getComponent<W extends IWorld = IWorld, C extends Component = Component>(world: W, component: C): C;
   export function getEntityComponents<W extends IWorld = IWorld>(world: W, eid: number): Component[];
 
+  export function getQueryComponents<W extends IWorld = IWorld>(world: W, query: Query<W>): Component[];
   export function defineQuery<W extends IWorld = IWorld>(components: (Component | QueryModifier<W>)[]): Query<W>;
-  export function Changed<W extends IWorld = IWorld>(c: Component | ISchema): Component | QueryModifier<W>;
-  export function Not<W extends IWorld = IWorld>(c: Component | ISchema): Component | QueryModifier<W>;
+  export function Changed<W extends IWorld = IWorld, C extends Component = Component>(
+    c: C | ISchema,
+  ): C | QueryModifier<W>;
+  export function Optional<W extends IWorld = IWorld, C extends Component = Component>(
+    c: C | ISchema,
+  ): C | QueryModifier<W>;
+  export function Not<W extends IWorld = IWorld, C extends Component = Component>(c: C | ISchema): C | QueryModifier<W>;
   export function enterQuery<W extends IWorld = IWorld>(query: Query<W>): Query<W>;
   export function exitQuery<W extends IWorld = IWorld>(query: Query<W>): Query<W>;
   export function resetChangedQuery<W extends IWorld = IWorld>(world: W, query: Query<W>): Query<W>;

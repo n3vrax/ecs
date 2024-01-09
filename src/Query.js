@@ -11,6 +11,7 @@ function modifier(c, mod) {
   return inner;
 }
 
+export const Optional = (c) => modifier(c, 'optional');
 export const Not = (c) => modifier(c, 'not');
 export const Or = (c) => modifier(c, 'or');
 export const Changed = (c) => modifier(c, 'changed');
@@ -45,6 +46,21 @@ export const $enterQuery = Symbol('enterQuery');
 export const $exitQuery = Symbol('exitQuery');
 
 const empty = Object.freeze([]);
+
+/**
+ * Get list of components for a given query.
+ *
+ * @param {function} query
+ * @returns {array} components
+ */
+export function getQueryComponents(world, query) {
+  if (!world[$queryMap].has(query)) registerQuery(world, query);
+  const q = world[$queryMap].get(query);
+
+  if (!q) return [];
+
+  return q.components.concat(q.optionalComponents);
+}
 
 /**
  * Given an existing query, returns a new function which returns entities who have been added to the given query since the last call of the function.
@@ -84,6 +100,7 @@ export const exitQuery = (query) => (world) => {
 
 export const registerQuery = (world, query) => {
   const components = [];
+  const optionalComponents = [];
   const notComponents = [];
   const changedComponents = [];
 
@@ -97,6 +114,9 @@ export const registerQuery = (world, query) => {
       if (mod === 'changed') {
         changedComponents.push(comp);
         components.push(comp);
+      }
+      if (mod === 'optional') {
+        optionalComponents.push(comp);
       }
       // if (mod === 'all') {
       //   allComponents.push(comp)
@@ -115,7 +135,7 @@ export const registerQuery = (world, query) => {
 
   const mapComponents = (c) => world[$componentMap].get(c);
 
-  const allComponents = components.concat(notComponents).map(mapComponents);
+  const allComponents = components.concat(notComponents).concat(optionalComponents).map(mapComponents);
 
   // const sparseSet = Uint32SparseSet(getGlobalSize())
   const sparseSet = SparseSet();
@@ -161,6 +181,7 @@ export const registerQuery = (world, query) => {
     archetypes,
     changed,
     components,
+    optionalComponents,
     notComponents,
     changedComponents,
     allComponents,

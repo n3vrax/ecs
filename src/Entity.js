@@ -5,9 +5,9 @@ import {
   $localEntityLookup,
   $manualEntityRecycling,
   $size,
-  $wentityCursor,
-  $wrecycledEntities,
-  $wremovedEntities,
+  $entityCursor,
+  $recycledEntities,
+  $removedEntities,
   resizeWorlds,
 } from './World.js';
 import { setSerializationResized } from './Serialize.js';
@@ -17,31 +17,22 @@ export const $entityComponents = Symbol('entityComponents');
 export const $entitySparseSet = Symbol('entitySparseSet');
 export const $entityArray = Symbol('entityArray');
 export const $entityIndices = Symbol('entityIndices');
-export const $removedEntities = Symbol('removedEntities');
 
 let defaultSize = 100000;
 
 // need a global EID cursor which all worlds and all components know about
 // so that world entities can posess entire rows spanning all component tables
-let globalEntityCursor = 0;
 let globalSize = defaultSize;
 let resizeThreshold = () => globalSize - globalSize / 5;
 
 export const getGlobalSize = () => globalSize;
-
-// removed eids should also be global to prevent memory leaks
-const removed = [];
-const recycled = [];
 
 const defaultRemovedReuseThreshold = 0.01;
 let removedReuseThreshold = defaultRemovedReuseThreshold;
 
 export const resetGlobals = () => {
   globalSize = defaultSize;
-  globalEntityCursor = 0;
   removedReuseThreshold = defaultRemovedReuseThreshold;
-  removed.length = 0;
-  recycled.length = 0;
 };
 
 export const getDefaultSize = () => defaultSize;
@@ -72,9 +63,8 @@ export const setRemovedRecycleThreshold = (newThreshold) => {
   removedReuseThreshold = newThreshold;
 };
 
-export const getEntityCursor = (world) => (world ? world[$wentityCursor] : globalEntityCursor);
-export const getRemovedEntities = (world) =>
-  world ? [...world[$wrecycledEntities], ...world[$wremovedEntities]] : [...recycled, ...removed];
+export const getEntityCursor = (world) => world[$entityCursor];
+export const getRemovedEntities = (world) => [...world[$recycledEntities], ...world[$removedEntities]];
 
 export const eidToWorld = new Map();
 
@@ -85,11 +75,8 @@ export const flushRemovedEntities = (world) => {
     );
   }
 
-  world[$wremovedEntities].push(...world[$wrecycledEntities]);
-  world[$wrecycledEntities].length = 0;
-
-  removed.push(...recycled);
-  recycled.length = 0;
+  world[$removedEntities].push(...world[$recycledEntities]);
+  world[$recycledEntities].length = 0;
 };
 
 /**
@@ -100,12 +87,12 @@ export const flushRemovedEntities = (world) => {
  */
 export const addEntity = (world) => {
   const eid = world[$manualEntityRecycling]
-    ? world[$wremovedEntities].length
-      ? world[$wremovedEntities].shift()
-      : world[$wentityCursor]++
-    : world[$wremovedEntities].length > Math.round(world[$size] * removedReuseThreshold)
-      ? world[$wremovedEntities].shift()
-      : world[$wentityCursor]++;
+    ? world[$removedEntities].length
+      ? world[$removedEntities].shift()
+      : world[$entityCursor]++
+    : world[$removedEntities].length > Math.round(world[$size] * removedReuseThreshold)
+      ? world[$removedEntities].shift()
+      : world[$entityCursor]++;
 
   if (eid > world[$size]) throw new Error('bitECS - max entities reached');
 
@@ -139,8 +126,8 @@ export const removeEntity = (world, eid) => {
   });
 
   // Free the entity
-  if (world[$manualEntityRecycling]) world[$wrecycledEntities].push(eid);
-  else world[$wremovedEntities].push(eid);
+  if (world[$manualEntityRecycling]) world[$recycledEntities].push(eid);
+  else world[$removedEntities].push(eid);
 
   // remove all eid state from world
   world[$entitySparseSet].remove(eid);
