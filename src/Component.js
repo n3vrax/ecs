@@ -116,7 +116,7 @@ export const hasComponent = (world, component, eid) => {
 };
 
 export const isManagedComponent = (component) => {
-  return typeof component.reset === 'function' && component.hasOwnProperty('schema');
+  return component.hasOwnProperty('type') && component.type === 'managed';
 };
 
 /**

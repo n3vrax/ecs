@@ -581,7 +581,6 @@ function modifier(c, mod) {
   inner[$modifier] = true;
   return inner;
 }
-var Optional = (c) => modifier(c, "optional");
 var Not = (c) => modifier(c, "not");
 var Changed = (c) => modifier(c, "changed");
 function Any(...comps) {
@@ -610,14 +609,6 @@ var $queryComponents = Symbol("queryComponents");
 var $enterQuery = Symbol("enterQuery");
 var $exitQuery = Symbol("exitQuery");
 var empty = Object.freeze([]);
-function getQueryComponents(world, query) {
-  if (!world[$queryMap].has(query))
-    registerQuery(world, query);
-  const q = world[$queryMap].get(query);
-  if (!q)
-    return [];
-  return q.components.concat(q.optionalComponents);
-}
 var enterQuery = (query) => (world) => {
   if (!world[$queryMap].has(query))
     registerQuery(world, query);
@@ -644,7 +635,6 @@ var exitQuery = (query) => (world) => {
 };
 var registerQuery = (world, query) => {
   const components2 = [];
-  const optionalComponents = [];
   const notComponents = [];
   const changedComponents = [];
   query[$queryComponents].forEach((c) => {
@@ -659,9 +649,6 @@ var registerQuery = (world, query) => {
         changedComponents.push(comp);
         components2.push(comp);
       }
-      if (mod === "optional") {
-        optionalComponents.push(comp);
-      }
     } else {
       if (!world[$componentMap].has(c))
         registerComponent(world, c);
@@ -669,7 +656,7 @@ var registerQuery = (world, query) => {
     }
   });
   const mapComponents = (c) => world[$componentMap].get(c);
-  const allComponents = components2.concat(notComponents).concat(optionalComponents).map(mapComponents);
+  const allComponents = components2.concat(notComponents).map(mapComponents);
   const sparseSet = SparseSet();
   const archetypes = [];
   const changed = [];
@@ -691,13 +678,14 @@ var registerQuery = (world, query) => {
   const masks = components2.map(mapComponents).reduce(reduceBitflags, {});
   const notMasks = notComponents.map(mapComponents).reduce(reduceBitflags, {});
   const hasMasks = allComponents.reduce(reduceBitflags, {});
-  const flatProps = components2.filter((c) => !c[$tagStore]).map((c) => Object.getOwnPropertySymbols(c).includes($storeFlattened) ? c[$storeFlattened] : [c]).reduce((a, v) => a.concat(v), []);
+  const flatProps = components2.map(mapComponents).filter((c) => !c.store[$tagStore]).map(
+    (c) => Object.getOwnPropertySymbols(c.store).includes($storeFlattened) ? c.store[$storeFlattened] : [c.store]
+  ).reduce((a, v) => a.concat(v), []);
   const shadows = [];
   const q = Object.assign(sparseSet, {
     archetypes,
     changed,
     components: components2,
-    optionalComponents,
     notComponents,
     changedComponents,
     allComponents,
@@ -909,7 +897,7 @@ var hasComponent = (world, component, eid) => {
   return (mask & bitflag) === bitflag;
 };
 var isManagedComponent = (component) => {
-  return typeof component.reset === "function" && component.hasOwnProperty("schema");
+  return component.hasOwnProperty("type") && component.type === "managed";
 };
 var addComponent = (world, component, eid, reset = false) => {
   if (eid === void 0)
@@ -1067,7 +1055,6 @@ export {
   Changed,
   DESERIALIZE_MODE,
   Not,
-  Optional,
   Types,
   addComponent,
   addEntity,
@@ -1087,7 +1074,6 @@ export {
   getAllEntities,
   getComponent,
   getEntityComponents,
-  getQueryComponents,
   getWorldComponents,
   hasComponent,
   parentArray,

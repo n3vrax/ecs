@@ -70,6 +70,7 @@ declare module 'ecs' {
   export interface IComponentProp {}
 
   export interface IComponent<S extends ISchema = ISchema> {
+    type: string;
     schema: S;
     store: ComponentType<S>;
     eid: number;
@@ -128,12 +129,8 @@ declare module 'ecs' {
   export function getComponent<W extends IWorld = IWorld, C extends Component = Component>(world: W, component: C): C;
   export function getEntityComponents<W extends IWorld = IWorld>(world: W, eid: number): Component[];
 
-  export function getQueryComponents<W extends IWorld = IWorld>(world: W, query: Query<W>): Component[];
   export function defineQuery<W extends IWorld = IWorld>(components: (Component | QueryModifier<W>)[]): Query<W>;
   export function Changed<W extends IWorld = IWorld, C extends Component = Component>(
-    c: C | ISchema,
-  ): C | QueryModifier<W>;
-  export function Optional<W extends IWorld = IWorld, C extends Component = Component>(
     c: C | ISchema,
   ): C | QueryModifier<W>;
   export function Not<W extends IWorld = IWorld, C extends Component = Component>(c: C | ISchema): C | QueryModifier<W>;
