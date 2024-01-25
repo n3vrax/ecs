@@ -371,6 +371,7 @@ export const queryRemoveEntity = (world, q, eid) => {
   q.toRemove.add(eid);
   world[$dirtyQueries].add(q);
   q.exited.add(eid);
+  q.entered.remove(eid);
 };
 
 /**
