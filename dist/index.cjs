@@ -376,7 +376,10 @@ var defineSerializer = (target, maxBytes = 2e7) => {
         if (!componentCache)
           componentCache = entityComponentCache.set(eid, /* @__PURE__ */ new Set()).get(eid);
         componentCache.add(eid);
-        const newlyAddedComponent = shadow && cache.get(component).get(eid) || !componentCache.has(component) && hasComponent(world, component, eid);
+        const newlyAddedComponent = (
+          // if we are diffing
+          shadow && cache.get(component).get(eid) || !componentCache.has(component) && hasComponent(world, component, eid)
+        );
         cache.get(component).set(eid, newlyAddedComponent);
         if (newlyAddedComponent) {
           componentCache.add(component);
@@ -751,6 +754,7 @@ var registerQuery = (world, query) => {
     allComponents,
     masks,
     notMasks,
+    // orMasks,
     hasMasks,
     generations,
     flatProps,
